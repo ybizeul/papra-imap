@@ -5,8 +5,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -34,7 +37,18 @@ func (c *Client) UploadDocument(ctx context.Context, orgID, filename string, con
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 
-	fw, err := w.CreateFormFile("file", filename)
+	partHeader := make(textproto.MIMEHeader)
+	disposition, err := mime.FormatMediaType("form-data", map[string]string{
+		"name":     "file",
+		"filename": filename,
+	})
+	if err != nil {
+		return fmt.Errorf("build content disposition: %w", err)
+	}
+	partHeader.Set("Content-Disposition", disposition)
+	partHeader.Set("Content-Type", contentTypeForFile(filename, content))
+
+	fw, err := w.CreatePart(partHeader)
 	if err != nil {
 		return fmt.Errorf("create form file: %w", err)
 	}
@@ -65,4 +79,26 @@ func (c *Client) UploadDocument(ctx context.Context, orgID, filename string, con
 	}
 
 	return nil
+}
+
+func contentTypeForFile(filename string, content []byte) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+
+	if ext == ".pdf" {
+		return "application/pdf"
+	}
+
+	if fromExt := mime.TypeByExtension(ext); fromExt != "" {
+		mediaType, _, err := mime.ParseMediaType(fromExt)
+		if err == nil && mediaType != "" {
+			return mediaType
+		}
+		return fromExt
+	}
+
+	if len(content) > 0 {
+		return http.DetectContentType(content)
+	}
+
+	return "application/octet-stream"
 }
