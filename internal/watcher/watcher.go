@@ -242,7 +242,7 @@ func processUnseen(ctx context.Context, c *imapclient.Client, acc config.Account
 			}
 		}
 
-		if acc.MarkAsRead && allUploaded {
+		if acc.MarkAsRead != nil && *acc.MarkAsRead && allUploaded {
 			toMarkRead = append(toMarkRead, msg.UID)
 		}
 	}

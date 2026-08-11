@@ -44,7 +44,7 @@ type AccountConfig struct {
 	Email          string   `yaml:"email"`
 	Folder         string   `yaml:"folder"`
 	OrganizationID string   `yaml:"organization_id"`
-	MarkAsRead     bool     `yaml:"mark_as_read"`
+	MarkAsRead     *bool    `yaml:"mark_as_read"`
 	PollInterval   Duration `yaml:"poll_interval"`
 	// Extensions limits imports to these file extensions (e.g. ["pdf", "docx"]); empty means all.
 	Extensions []string `yaml:"extensions"`
@@ -78,6 +78,10 @@ func (c *Config) applyDefaults() {
 		}
 		if acc.PollInterval.Duration == 0 {
 			acc.PollInterval.Duration = 5 * time.Minute
+		}
+		if acc.MarkAsRead == nil {
+			markAsRead := true
+			acc.MarkAsRead = &markAsRead
 		}
 		if len(acc.Extensions) == 0 {
 			acc.Extensions = []string{"pdf"}
