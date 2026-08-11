@@ -23,7 +23,7 @@ kos:
   - id: papra-imap
     build: papra-imap
     repositories:
-      - ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/papra-imap
+      - ghcr.io/ybizeul/papra-imap
     base_image: gcr.io/distroless/base-debian12
     tags:
       - "{{ .Tag }}"
