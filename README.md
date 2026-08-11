@@ -55,3 +55,40 @@ accounts:
 | mark_as_read    | If `true`, marks a message as seen only when all matching attachments uploaded successfully.     | `false` |
 | poll_interval   | Interval between checks. Used as poll interval or IDLE wake-up interval (for servers with IDLE).| `5m`    |
 | extensions      | Allowed attachment extensions (with or without `.`). Omit/empty currently defaults to `pdf` only. | `["pdf"]` |
+
+## Run As A Container
+
+### Docker
+
+Mount your config file into the container and pass `-config`:
+
+```bash
+docker run --rm \
+    --name papra-imap \
+    -v "$(pwd)/config.yaml:/config.yaml:ro" \
+    ghcr.io/ybizeul/papra-imap:latest \
+    -config /config.yaml
+```
+
+Add `-debug` to enable debug logs:
+
+```bash
+docker run --rm \
+    --name papra-imap \
+    -v "$(pwd)/config.yaml:/config.yaml:ro" \
+    ghcr.io/ybizeul/papra-imap:latest \
+    -config /config.yaml -debug
+```
+
+### Docker Compose
+
+```yaml
+services:
+    papra-imap:
+        image: ghcr.io/ybizeul/papra-imap:latest
+        container_name: papra-imap
+        restart: unless-stopped
+        command: ["-config", "/config.yaml"]
+        volumes:
+            - ./config.yaml:/config.yaml:ro
+```
