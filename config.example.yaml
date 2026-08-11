@@ -1,0 +1,16 @@
+papra:
+  host: papra.example.com
+  api_key: ppapi_your_api_key_here
+
+accounts:
+  - name: gmail
+    host: imap.gmail.com
+    port: 993
+    ssl: true
+    username: your.email@gmail.com
+    password: your_app_password
+    email: yann+documents@gmail.com  # only import emails sent to this address (leave empty for all)
+    folder: INBOX
+    organization_id: org_your_org_id
+    mark_as_read: true
+    poll_interval: 5m

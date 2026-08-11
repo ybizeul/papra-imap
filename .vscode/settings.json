@@ -1,0 +1,8 @@
+{
+    "go.goroot": "/Users/yann/.local/share/mise/installs/go/1.26.3",
+    "go.alternateTools": {
+        "go": "/Users/yann/.local/share/mise/shims/go",
+        "dlv": "/Users/yann/.local/share/mise/shims/dlv",
+        "gopls": "/Users/yann/.local/share/mise/shims/gopls"
+    }
+}
