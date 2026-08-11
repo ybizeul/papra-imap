@@ -1,4 +1,4 @@
-module github.com/papra-hq/papra-imap
+module github.com/ybizeul/papra-imap
 
 go 1.25.5
 

@@ -9,9 +9,9 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/papra-hq/papra-imap/internal/config"
-	"github.com/papra-hq/papra-imap/internal/papra"
-	"github.com/papra-hq/papra-imap/internal/watcher"
+	"github.com/ybizeul/papra-imap/internal/config"
+	"github.com/ybizeul/papra-imap/internal/papra"
+	"github.com/ybizeul/papra-imap/internal/watcher"
 )
 
 func main() {

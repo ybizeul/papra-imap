@@ -15,8 +15,8 @@ import (
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-message/mail"
 
-	"github.com/papra-hq/papra-imap/internal/config"
-	"github.com/papra-hq/papra-imap/internal/papra"
+	"github.com/ybizeul/papra-imap/internal/config"
+	"github.com/ybizeul/papra-imap/internal/papra"
 )
 
 const maxBackoff = 5 * time.Minute
