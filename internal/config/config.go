@@ -46,6 +46,7 @@ type AccountConfig struct {
 	OrganizationID string   `yaml:"organization_id"`
 	Tags           []string `yaml:"tags"`
 	MarkAsRead     *bool    `yaml:"mark_as_read"`
+	SubjectAsTitle bool     `yaml:"subject_as_title"`
 	PollInterval   Duration `yaml:"poll_interval"`
 	// Extensions limits imports to these file extensions (e.g. ["pdf", "docx"]); empty means all.
 	Extensions []string `yaml:"extensions"`

@@ -26,6 +26,7 @@ accounts:
         tags:
             - inbox
         mark_as_read: true
+        subject_as_title: true
         poll_interval: 5m
         extensions:
             - pdf
@@ -56,6 +57,7 @@ accounts:
 | organization_id | Target papra organization ID for uploaded attachments.                                           | -       |
 | tags            | Optional tags to apply to every imported document from this account.                            | `[]`    |
 | mark_as_read    | If `true`, marks a message as seen only when all matching attachments uploaded successfully.     | `true` |
+| subject_as_title | If `true`, uses the email subject as the uploaded document name when exactly one attachment matches. | `false` |
 | poll_interval   | Interval between checks. Used as poll interval or IDLE wake-up interval (for servers with IDLE).| `5m`    |
 | extensions      | Allowed attachment extensions (with or without `.`). Omit/empty currently defaults to `pdf` only. | `["pdf"]` |
 

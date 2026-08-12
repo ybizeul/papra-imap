@@ -233,12 +233,21 @@ func processUnseen(ctx context.Context, c *imapclient.Client, acc config.Account
 		}
 
 		allUploaded := true
+		messageSubject := ""
+		if msg.Envelope != nil {
+			messageSubject = msg.Envelope.Subject
+		}
 		for _, att := range attachments {
-			if err := papraClient.UploadDocument(ctx, acc.OrganizationID, att.filename, att.data, acc.Tags); err != nil {
-				msgLog.Error("upload failed", "filename", att.filename, "error", err)
+			filename := att.filename
+			if acc.SubjectAsTitle && len(attachments) == 1 {
+				filename = filenameFromSubject(messageSubject, att.filename)
+			}
+
+			if err := papraClient.UploadDocument(ctx, acc.OrganizationID, filename, att.data, acc.Tags); err != nil {
+				msgLog.Error("upload failed", "filename", filename, "error", err)
 				allUploaded = false
 			} else {
-				msgLog.Info("uploaded document", "filename", att.filename)
+				msgLog.Info("uploaded document", "filename", filename)
 			}
 		}
 
@@ -335,4 +344,29 @@ func filenameFromRawHeader(disposition, contentType string) string {
 		}
 	}
 	return ""
+}
+
+func filenameFromSubject(subject, fallbackFilename string) string {
+	trimmed := strings.TrimSpace(subject)
+	if trimmed == "" {
+		return fallbackFilename
+	}
+
+	base := strings.NewReplacer(
+		"/", "-",
+		"\\", "-",
+		":", "-",
+		"*", "-",
+		"?", "-",
+		"\"", "-",
+		"<", "-",
+		">", "-",
+		"|", "-",
+	).Replace(trimmed)
+	base = strings.Join(strings.Fields(base), " ")
+	if base == "" {
+		return fallbackFilename
+	}
+
+	return base + filepath.Ext(fallbackFilename)
 }

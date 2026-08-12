@@ -15,4 +15,5 @@ accounts:
     tags:
       - inbox
     mark_as_read: true
+    subject_as_title: true
     poll_interval: 5m
