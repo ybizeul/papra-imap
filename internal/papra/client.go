@@ -37,7 +37,7 @@ func NewClient(host, apiKey string) *Client {
 	}
 }
 
-func (c *Client) UploadDocument(ctx context.Context, orgID, filename string, content []byte) error {
+func (c *Client) UploadDocument(ctx context.Context, orgID, filename string, content []byte, tags []string) error {
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 
@@ -60,6 +60,14 @@ func (c *Client) UploadDocument(ctx context.Context, orgID, filename string, con
 	if _, err := fw.Write(content); err != nil {
 		return fmt.Errorf("write file content: %w", err)
 	}
+	for _, tag := range tags {
+		if strings.TrimSpace(tag) == "" {
+			continue
+		}
+		if err := w.WriteField("tags", tag); err != nil {
+			return fmt.Errorf("write tags field: %w", err)
+		}
+	}
 	if err := w.Close(); err != nil {
 		return fmt.Errorf("close multipart writer: %w", err)
 	}
@@ -76,6 +84,7 @@ func (c *Client) UploadDocument(ctx context.Context, orgID, filename string, con
 		"method", req.Method,
 		"url", req.URL.String(),
 		"filename", filename,
+		"tags", tags,
 		"file_size", len(content),
 		"file_ext", strings.ToLower(filepath.Ext(filename)),
 		"part_content_type", partContentType,

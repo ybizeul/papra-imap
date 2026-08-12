@@ -12,5 +12,7 @@ accounts:
     email: yann+documents@gmail.com  # only import emails sent to this address (leave empty for all)
     folder: INBOX
     organization_id: org_your_org_id
+    tags:
+      - inbox
     mark_as_read: true
     poll_interval: 5m

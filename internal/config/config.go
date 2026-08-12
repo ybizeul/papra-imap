@@ -44,6 +44,7 @@ type AccountConfig struct {
 	Email          string   `yaml:"email"`
 	Folder         string   `yaml:"folder"`
 	OrganizationID string   `yaml:"organization_id"`
+	Tags           []string `yaml:"tags"`
 	MarkAsRead     *bool    `yaml:"mark_as_read"`
 	PollInterval   Duration `yaml:"poll_interval"`
 	// Extensions limits imports to these file extensions (e.g. ["pdf", "docx"]); empty means all.
