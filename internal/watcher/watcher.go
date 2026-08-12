@@ -244,10 +244,10 @@ func processUnseen(ctx context.Context, c *imapclient.Client, acc config.Account
 			}
 
 			if err := papraClient.UploadDocument(ctx, acc.OrganizationID, filename, att.data, acc.Tags); err != nil {
-				msgLog.Error("upload failed", "filename", filename, "error", err)
+				msgLog.Error("upload failed", "filename", filename, "tags", acc.Tags, "error", err)
 				allUploaded = false
 			} else {
-				msgLog.Info("uploaded document", "filename", filename)
+				msgLog.Info("uploaded document", "filename", filename, "tags", acc.Tags)
 			}
 		}
 

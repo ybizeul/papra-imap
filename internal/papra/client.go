@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -22,6 +23,21 @@ type Client struct {
 	baseURL string
 	apiKey  string
 	http    *http.Client
+}
+
+type uploadDocumentResponse struct {
+	Document struct {
+		ID string `json:"id"`
+	} `json:"document"`
+}
+
+type listTagsResponse struct {
+	Tags []papraTag `json:"tags"`
+}
+
+type papraTag struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 func NewClient(host, apiKey string) *Client {
@@ -59,14 +75,6 @@ func (c *Client) UploadDocument(ctx context.Context, orgID, filename string, con
 	}
 	if _, err := fw.Write(content); err != nil {
 		return fmt.Errorf("write file content: %w", err)
-	}
-	for _, tag := range tags {
-		if strings.TrimSpace(tag) == "" {
-			continue
-		}
-		if err := w.WriteField("tags", tag); err != nil {
-			return fmt.Errorf("write tags field: %w", err)
-		}
 	}
 	if err := w.Close(); err != nil {
 		return fmt.Errorf("close multipart writer: %w", err)
@@ -123,6 +131,140 @@ func (c *Client) UploadDocument(ctx context.Context, orgID, filename string, con
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("papra API error %d: %s", resp.StatusCode, respBody)
+	}
+
+	cleanedTags := normalizeTags(tags)
+	if len(cleanedTags) == 0 {
+		return nil
+	}
+
+	var uploadResp uploadDocumentResponse
+	if err := json.Unmarshal(respBody, &uploadResp); err != nil {
+		return fmt.Errorf("decode upload response: %w", err)
+	}
+	if uploadResp.Document.ID == "" {
+		return fmt.Errorf("upload response missing document id")
+	}
+
+	tagIDsByName, err := c.resolveTagIDs(ctx, orgID, cleanedTags)
+	if err != nil {
+		return err
+	}
+
+	for _, tag := range cleanedTags {
+		tagID := tagIDsByName[strings.ToLower(tag)]
+		if err := c.addTagToDocument(ctx, orgID, uploadResp.Document.ID, tagID); err != nil {
+			return fmt.Errorf("apply tag %q: %w", tag, err)
+		}
+	}
+
+	return nil
+}
+
+func normalizeTags(tags []string) []string {
+	seen := make(map[string]struct{}, len(tags))
+	out := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		trimmed := strings.TrimSpace(tag)
+		if trimmed == "" {
+			continue
+		}
+		key := strings.ToLower(trimmed)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, trimmed)
+	}
+	return out
+}
+
+func (c *Client) resolveTagIDs(ctx context.Context, orgID string, tagNames []string) (map[string]string, error) {
+	tags, err := c.listOrganizationTags(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	byName := make(map[string]string, len(tags))
+	for _, tag := range tags {
+		name := strings.TrimSpace(tag.Name)
+		if name == "" {
+			continue
+		}
+		byName[strings.ToLower(name)] = tag.ID
+	}
+
+	missing := make([]string, 0)
+	for _, tagName := range tagNames {
+		if _, ok := byName[strings.ToLower(tagName)]; !ok {
+			missing = append(missing, tagName)
+		}
+	}
+	if len(missing) > 0 {
+		return nil, fmt.Errorf("configured tags not found in Papra organization %q: %s", orgID, strings.Join(missing, ", "))
+	}
+
+	return byName, nil
+}
+
+func (c *Client) listOrganizationTags(ctx context.Context, orgID string) ([]papraTag, error) {
+	url := fmt.Sprintf("%s/api/organizations/%s/tags", c.baseURL, orgID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create list tags request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("list tags request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read list tags response body: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("list tags API error %d: %s", resp.StatusCode, respBody)
+	}
+
+	var parsed listTagsResponse
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		return nil, fmt.Errorf("decode list tags response: %w", err)
+	}
+
+	return parsed.Tags, nil
+}
+
+func (c *Client) addTagToDocument(ctx context.Context, orgID, documentID, tagID string) error {
+	url := fmt.Sprintf("%s/api/organizations/%s/documents/%s/tags", c.baseURL, orgID, documentID)
+	body, err := json.Marshal(map[string]string{"tagId": tagID})
+	if err != nil {
+		return fmt.Errorf("encode add tag request body: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("create add tag request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("add tag request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read add tag response body: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("add tag API error %d: %s", resp.StatusCode, respBody)
 	}
 
 	return nil
