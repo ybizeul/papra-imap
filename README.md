@@ -56,7 +56,7 @@ accounts:
 | folder          | IMAP folder/mailbox to monitor.                                                                  | `INBOX` |
 | organization_id | Target papra organization ID for uploaded attachments.                                           | -       |
 | tags            | Optional existing Papra tag names to apply to every imported document from this account. Requires API key permissions to read tags and update documents. | `[]`    |
-| mark_as_read    | If `true`, marks a message as seen only when all matching attachments uploaded successfully.     | `true` |
+| mark_as_read    | If `true`, marks a message as seen only when it has matching attachments and all of them uploaded successfully. | `true` |
 | subject_as_title | If `true`, uses the email subject as the uploaded document name when exactly one attachment matches. | `false` |
 | poll_interval   | Interval between checks. Used as poll interval or IDLE wake-up interval (for servers with IDLE).| `5m`    |
 | extensions      | Allowed attachment extensions (with or without `.`). Omit/empty currently defaults to `pdf` only. | `["pdf"]` |

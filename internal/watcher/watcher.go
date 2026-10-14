@@ -251,7 +251,7 @@ func processUnseen(ctx context.Context, c *imapclient.Client, acc config.Account
 			}
 		}
 
-		if acc.MarkAsRead != nil && *acc.MarkAsRead && allUploaded {
+		if shouldMarkAsRead(acc.MarkAsRead, len(attachments), allUploaded) {
 			toMarkRead = append(toMarkRead, msg.UID)
 		}
 	}
@@ -268,6 +268,10 @@ func processUnseen(ctx context.Context, c *imapclient.Client, acc config.Account
 	}
 
 	return nil
+}
+
+func shouldMarkAsRead(markAsRead *bool, eligibleAttachments int, allUploaded bool) bool {
+	return markAsRead != nil && *markAsRead && eligibleAttachments > 0 && allUploaded
 }
 
 func extractAttachments(msgBytes []byte) ([]attachment, error) {
